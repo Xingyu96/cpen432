@@ -10,10 +10,12 @@
 #include <uart.h>
 #include <printk.h>
 
-#define	OWN_IP_ADDRESS		{192, 168, 0, 250}	// must be a valid IP address on your LAN
+#define	OWN_IP_ADDRESS		{192, 168, 1, 250}	// must be a valid IP address on your LAN
 
 #define MAC_ADDRESS_SIZE	6
 #define IP_ADDRESS_SIZE		4
+
+void debug_foo(void);
 
 typedef struct TEthernetHeader
 {
@@ -42,12 +44,25 @@ typedef struct TARPPacket
 }
 PACKED TARPPacket;
 
+typedef struct TMyPacket
+{
+	u8 Command;
+}
+PACKED TMyPacket;
+
 typedef struct TARPFrame
 {
 	TEthernetHeader Ethernet;
 	TARPPacket	ARP;
 }
 PACKED TARPFrame;
+
+typedef struct TMyFrame
+{
+	TEthernetHeader Ethernet;
+	TMyPacket Packet;
+}
+PACKED TMyFrame;
 
 static const u8 OwnIPAddress[] = OWN_IP_ADDRESS;
 
@@ -56,15 +71,15 @@ static const char FromSample[] = "sample";
 int main (void)
 {
 	uart_init();
-	printk("hello world!\n");
-			printk("own ip address is %u.%u.%u.%u \n",
-				(unsigned) OwnIPAddress[0],
-			  (unsigned) OwnIPAddress[1],
-			  (unsigned) OwnIPAddress[2],
-			  (unsigned) OwnIPAddress[3]);
+	printk("own ip address is %u.%u.%u.%u \n",
+			(unsigned) OwnIPAddress[0],
+			(unsigned) OwnIPAddress[1],
+			(unsigned) OwnIPAddress[2],
+			(unsigned) OwnIPAddress[3]);
 	
 	if (!USPiEnvInitialize ())
 	{
+		printk("Cannot initialize USPi env\n");
 		return EXIT_HALT;
 	}
 	
@@ -90,73 +105,44 @@ int main (void)
 
 	u8 OwnMACAddress[MAC_ADDRESS_SIZE];
 	USPiGetMACAddress (OwnMACAddress);
+	printk("own mac address is %x.%x.%x.%x.%x.%x \n",
+			(unsigned) OwnMACAddress[0],
+			(unsigned) OwnMACAddress[1],
+			(unsigned) OwnMACAddress[2],
+			(unsigned) OwnMACAddress[3],
+			(unsigned) OwnMACAddress[4],
+			(unsigned) OwnMACAddress[5]);
+
+	u8 TheirMACAddress[MAC_ADDRESS_SIZE];
+	TheirMACAddress[0] = 184;
+	TheirMACAddress[1] = 39;
+	TheirMACAddress[2] = 235;
+	TheirMACAddress[3] = 44;
+	TheirMACAddress[4] = 185;
+	TheirMACAddress[5] = 253;
+	printk("Their mac address is %x.%x.%x.%x.%x.%x \n",
+			(unsigned) TheirMACAddress[0],
+			(unsigned) TheirMACAddress[1],
+			(unsigned) TheirMACAddress[2],
+			(unsigned) TheirMACAddress[3],
+			(unsigned) TheirMACAddress[4],
+			(unsigned) TheirMACAddress[5]);
+
 
 	while (1)
 	{
 		u8 Buffer[USPI_FRAME_BUFFER_SIZE];
-		unsigned nFrameLength;
-		if (!USPiReceiveFrame (Buffer, &nFrameLength))
-		{
-			continue;
-		}
+		TMyFrame *pMyFrame = (TMyFrame *) Buffer;
+		uint16_t protocol_type = BE (0x800);
+		uint8_t command = 80;
 
-		LogWrite (FromSample, LOG_NOTICE, "Frame received (length %u)", nFrameLength);
-		printk("Frame received (length %u)\n", nFrameLength);
+		memcpy ((u8 *)pMyFrame->Ethernet.MACReceiver, TheirMACAddress, MAC_ADDRESS_SIZE);
+		memcpy ((u8 *)pMyFrame->Ethernet.MACSender, OwnMACAddress, MAC_ADDRESS_SIZE);
+		memcpy ((u16 *)&pMyFrame->Ethernet.nProtocolType, &protocol_type, sizeof(u16));
 
-		if (nFrameLength < sizeof (TARPFrame))
-		{
-			continue;
-		}
+		memcpy ((u8 *)&pMyFrame->Packet.Command, &command, sizeof(uint8_t));
 
-		TARPFrame *pARPFrame = (TARPFrame *) Buffer;
-		if (   pARPFrame->Ethernet.nProtocolType	!= BE (ETH_PROT_ARP)
-		    || pARPFrame->ARP.nHWAddressSpace		!= BE (HW_ADDR_ETHER)
-		    || pARPFrame->ARP.nProtocolAddressSpace	!= BE (PROT_ADDR_IP)
-		    || pARPFrame->ARP.nHWAddressLength		!= MAC_ADDRESS_SIZE
-		    || pARPFrame->ARP.nProtocolAddressLength	!= IP_ADDRESS_SIZE
-		    || pARPFrame->ARP.nOPCode			!= BE (ARP_REQUEST))
-		{
-			continue;
-		}
-
-		LogWrite (FromSample, LOG_NOTICE, "Valid ARP request from %u.%u.%u.%u received",
-			  (unsigned) pARPFrame->ARP.ProtocolAddressSender[0],
-			  (unsigned) pARPFrame->ARP.ProtocolAddressSender[1],
-			  (unsigned) pARPFrame->ARP.ProtocolAddressSender[2],
-			  (unsigned) pARPFrame->ARP.ProtocolAddressSender[3]);
-			  
-		printk("valid arp request from %u.%u.%u.%u received\n",
-				(unsigned) pARPFrame->ARP.ProtocolAddressSender[0],
-			  (unsigned) pARPFrame->ARP.ProtocolAddressSender[1],
-			  (unsigned) pARPFrame->ARP.ProtocolAddressSender[2],
-			  (unsigned) pARPFrame->ARP.ProtocolAddressSender[3]);
-		printk("target address is %u.%u.%u.%u \n",
-				(unsigned) pARPFrame->ARP.ProtocolAddressTarget[0],
-			  (unsigned) pARPFrame->ARP.ProtocolAddressTarget[1],
-			  (unsigned) pARPFrame->ARP.ProtocolAddressTarget[2],
-			  (unsigned) pARPFrame->ARP.ProtocolAddressTarget[3]);
-
-		if (memcmp (pARPFrame->ARP.ProtocolAddressTarget, OwnIPAddress, IP_ADDRESS_SIZE) != 0)
-		{
-			continue;
-		}
-
-		LogWrite (FromSample, LOG_NOTICE, "ARP request is to us");
-		printk("ARP request is to us\n");
-		
-
-		// prepare reply packet
-		memcpy (pARPFrame->Ethernet.MACReceiver, pARPFrame->ARP.HWAddressSender, MAC_ADDRESS_SIZE);
-		memcpy (pARPFrame->Ethernet.MACSender, OwnMACAddress, MAC_ADDRESS_SIZE);
-		pARPFrame->ARP.nOPCode = BE (ARP_REPLY);
-
-		memcpy (pARPFrame->ARP.HWAddressTarget, pARPFrame->ARP.HWAddressSender, MAC_ADDRESS_SIZE);
-		memcpy (pARPFrame->ARP.ProtocolAddressTarget, pARPFrame->ARP.ProtocolAddressSender, IP_ADDRESS_SIZE);
-
-		memcpy (pARPFrame->ARP.HWAddressSender, OwnMACAddress, MAC_ADDRESS_SIZE);
-		memcpy (pARPFrame->ARP.ProtocolAddressSender, OwnIPAddress, IP_ADDRESS_SIZE);
-		
-		if (!USPiSendFrame (pARPFrame, sizeof *pARPFrame))
+		if (!USPiSendFrame (pMyFrame, sizeof *pMyFrame))
 		{
 			LogWrite (FromSample, LOG_ERROR, "USPiSendFrame failed");
 			printk("USPiSendFrame failed\n");
@@ -164,8 +150,7 @@ int main (void)
 			break;
 		}
 
-		LogWrite (FromSample, LOG_NOTICE, "ARP reply successfully sent");
-		printk("ARP reply successfully sent\n");
+
 	}
 
 	USPiEnvClose ();
