@@ -10,6 +10,8 @@
 #include <kstdint.h>
 #include <BCM2836_2.h>
 
+void DelayLoop(unsigned nCount);
+
 /** @brief base of GPIO in memory mapped IO on pi
  * see page 89 onward in BCM2835 peripherals for info about MMIO for GPIO */
 #define GPIO_BASE (MMIO_BASE_PHYSICAL + 0x200000)
