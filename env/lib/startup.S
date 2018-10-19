@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <uspienv/sysconfig.h>
+#include <uspienv/psr.h>
 
 /*
  * Helper macro to enter SVC mode cleanly and mask interrupts. reg is
@@ -50,11 +51,76 @@
 
 	.globl	_start
 _start:
-	safe_svcmode_maskall r0
 
-	cps	#0x1F				/* set system mode */
-	mov	sp, #MEM_KERNEL_STACK
-	b	sysinit
+    ldr pc, _reset_h
+    ldr pc, _undefined_instruction_vector_h
+    ldr pc, _software_interrupt_vector_h
+    ldr pc, _prefetch_abort_vector_h
+    ldr pc, _data_abort_vector_h
+    ldr pc, _unused_handler_h
+    ldr pc, _irq_asm_handler_h
+    ldr pc, _fast_interrupt_vector_h
+
+_reset_h:                           .word   _reset_
+_undefined_instruction_vector_h:    .word   undefined_instruction_vector
+_software_interrupt_vector_h:       .word   software_interrupt_vector
+_prefetch_abort_vector_h:           .word   prefetch_abort_vector
+_data_abort_vector_h:               .word   data_abort_vector
+_unused_handler_h:                  .word   _reset_
+_irq_asm_handler_h:            		  .word   irq_asm_handler
+_fast_interrupt_vector_h:           .word   fast_interrupt_vector
+
+_reset_:
+  // We enter execution in supervisor mode 
+  mov     r0, #0x8000
+  mov     r1, #0x0000
+  ldmia   r0!,{r2, r3, r4, r5, r6, r7, r8, r9}
+  stmia   r1!,{r2, r3, r4, r5, r6, r7, r8, r9}
+  ldmia   r0!,{r2, r3, r4, r5, r6, r7, r8, r9}
+  stmia   r1!,{r2, r3, r4, r5, r6, r7, r8, r9}
+  // setup a default irq stack
+  mrs r0, cpsr                          // stash cpsr so we can go back
+  msr cpsr_c, #(PSR_MODE_IRQ | PSR_IRQ | PSR_FIQ) // jump to IRQ
+  msr cpsr_c, #(PSR_MODE_IRQ | PSR_IRQ | PSR_FIQ) // jump to IRQ
+  ldr sp, =__irq_stack_top              // setup the irq stack
+  msr cpsr_c, r0                        // jump back to the original mode
+  // setup the stack to start where the kernel is loaded and grow DOWN as needed
+  ldr sp, =__svc_stack_top
+  ldr r0, =__bss_start
+  ldr r1, =__bss_end
+  mov r2, #0
+  mov r3, #0
+  mov r4, #0
+  mov r5, #0
+  // clear out bss
+bss_loop:
+  stmia r0!, {r2-r5}
+  cmp r0, r1
+  blo bss_loop
+  // no need to initialize .data or .rodata since rpi runs out of ram entirely
+  // call kernel_main()
+  bl  main
+
+  // stop a bad kernel
+.global hang
+hang:
+  wfi
+  b hang
+
+undefined_instruction_vector:
+  b undefined_instruction_vector
+
+software_interrupt_vector:
+  b software_interrupt_vector
+
+prefetch_abort_vector:
+  subs pc, lr, #4
+
+data_abort_vector:
+  bx lr
+
+fast_interrupt_vector:
+  subs pc, lr, #4
 
 #if RASPPI != 1
 	
