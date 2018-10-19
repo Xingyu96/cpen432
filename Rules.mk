@@ -42,7 +42,7 @@ endif
 
 OPTIMIZE ?= -O2
 
-AFLAGS	+= $(ARCH) -DRASPPI=$(RASPPI)
+AFLAGS	+= $(ARCH) -DRASPPI=$(RASPPI) -I $(USPIHOME)/include
 CFLAGS	+= $(ARCH) -Wall -Wno-psabi -fsigned-char -fno-builtin -nostdinc -nostdlib \
 	   -std=gnu99 -DRASPPI=$(RASPPI) -I $(USPIHOME)/include $(OPTIMIZE) #-DNDEBUG
 
