@@ -63,7 +63,7 @@ static const char FromSample[] = "sample";
 
 int main (void)
 {
-	//uart_init();
+	uart_init();
 		/* This sets the interrupt enable bit(s) in CPSR (FIQ, IRQ, SVC, etc) */
 	  enable_interrupts();
 	  printk("enabled interrupts\n");
@@ -88,7 +88,7 @@ int main (void)
 	  printk("'3' - 5 SECONDS CYCLE\n");
 		  
 	  // init led
-	  //led_init();
+	  led_init();
 	  printk("init led\n");
 	  
 	  // ethernet
@@ -205,7 +205,7 @@ int main (void)
 	  	DelayLoop(250000);
 	  	//turn_led_off();
       //printk("hi\n");
-      printk("timer is pending? = %d\n", timer_is_pending());
+      //printk("timer is pending? = %d\n", timer_is_pending());
 	  }
 	  return EXIT_HALT;
 	
