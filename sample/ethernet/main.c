@@ -63,7 +63,7 @@ static const char FromSample[] = "sample";
 
 int main (void)
 {
-	uart_init();
+	//uart_init();
 		/* This sets the interrupt enable bit(s) in CPSR (FIQ, IRQ, SVC, etc) */
 	  enable_interrupts();
 	  printk("enabled interrupts\n");
@@ -71,12 +71,12 @@ int main (void)
 	  /* This enables arm timer and uart interrupt */
 	  enable_arm_irq();
 	  printk("enabled arm irq\n");
-			printk("own ip address is %u.%u.%u.%u \n",
-				(unsigned) OwnIPAddress[0],
-			  (unsigned) OwnIPAddress[1],
-			  (unsigned) OwnIPAddress[2],
-			  (unsigned) OwnIPAddress[3]);
-	
+    printk("own ip address is %u.%u.%u.%u \n",
+    (unsigned) OwnIPAddress[0],
+    (unsigned) OwnIPAddress[1],
+    (unsigned) OwnIPAddress[2],
+    (unsigned) OwnIPAddress[3]);
+
 	  int freq = TIMER_IRQ_FREQ;
 	  timer_start(freq);
 	  
@@ -88,7 +88,7 @@ int main (void)
 	  printk("'3' - 5 SECONDS CYCLE\n");
 		  
 	  // init led
-	  led_init();
+	  //led_init();
 	  printk("init led\n");
 	  
 	  // ethernet
@@ -200,10 +200,12 @@ int main (void)
 		USPiEnvClose ();*/
 		
 	  while (1) {
-	  	/*DelayLoop(250000);
-	  	turn_led_on();
 	  	DelayLoop(250000);
-	  	turn_led_off();*/
+	  	//turn_led_on();
+	  	DelayLoop(250000);
+	  	//turn_led_off();
+      //printk("hi\n");
+      printk("timer is pending? = %d\n", timer_is_pending());
 	  }
 	  return EXIT_HALT;
 	

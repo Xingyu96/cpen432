@@ -47,7 +47,7 @@ void irq_c_handler(void) {
  */
 void enable_arm_irq(void) {
     // Enable Auxiliary IRQ for Mini-UART
-    *RPI_INTERRUPT_CONTROLLER_ENABLE_IRQS_1_REG  = RPI_AUX_INT_IRQ;   
+    // *RPI_INTERRUPT_CONTROLLER_ENABLE_IRQS_1_REG  = RPI_AUX_INT_IRQ;   
 
     // Enable timer IRQ
     *RPI_INTERRUPT_CONTROLLER_ENABLE_BASIC_IRQS_REG = RPI_BASIC_ARM_TIMER_IRQ;
