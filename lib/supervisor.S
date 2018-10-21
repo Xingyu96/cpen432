@@ -31,12 +31,14 @@
 // execute after the exception is at (PC -8) instead of (PC - 4), so we need to
 // subtract 4 bytes from LR_MODE = PC -4.
 
+#include <../env/include/uspienv/sysconfig.h>
+
 irq_asm_handler:
     // Make LR point to the instruction we should return to
     subs    lr, lr, #4
 
     // Set the stack pointer to the top of the stack
-    ldr     sp, =__irq_stack_top
+    mov     sp, #MEM_IRQ_STACK
 
     // Push registers onto stack
     stmfd   sp!, {r0-r12, lr}

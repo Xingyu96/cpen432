@@ -50,6 +50,8 @@ void timer_start(int freq){
 
   // Load the initial timer value based 
   *ARM_TIMER_LOAD_REG = freq;
+  
+  printk("load %d into arm_timer_load_reg\n", freq);
 
 }
 
