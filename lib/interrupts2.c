@@ -19,7 +19,7 @@ static int input_index = 0;
  * 
  */
 void irq_c_handler(void) {
-	printk("in irq\n");
+	//printk("in irq\n");
     // Handle Timer IRQ
     if (timer_is_pending()) {
         timer_clear_pending();
@@ -42,15 +42,21 @@ void irq_c_handler(void) {
 }
 
 /**
- * @brief Enable ARM interrupt sources
+ * @brief Enable timer interrupt sources
  * 
  */
-void enable_arm_irq(void) {
-    // Enable Auxiliary IRQ for Mini-UART
-    *RPI_INTERRUPT_CONTROLLER_ENABLE_IRQS_1_REG  = RPI_AUX_INT_IRQ;   
-
+void enable_timer_irq(void) {
     // Enable timer IRQ
     *RPI_INTERRUPT_CONTROLLER_ENABLE_BASIC_IRQS_REG = RPI_BASIC_ARM_TIMER_IRQ;
+}
+
+/**
+ * @brief Enable uart interrupt sources
+ * 
+ */
+void enable_uart_irq(void) {
+    // Enable Auxiliary IRQ for Mini-UART
+    *RPI_INTERRUPT_CONTROLLER_ENABLE_IRQS_1_REG  = RPI_AUX_INT_IRQ;   
 }
 
 /**

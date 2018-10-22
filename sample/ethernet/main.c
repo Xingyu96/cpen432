@@ -69,7 +69,7 @@ int main (void)
 	  printk("enabled interrupts\n");
 
 	  /* This enables arm timer and uart interrupt */
-	  enable_arm_irq();
+	  enable_uart_irq();
 	  printk("enabled arm irq\n");
     printk("own ip address is %u.%u.%u.%u \n",
     (unsigned) OwnIPAddress[0],

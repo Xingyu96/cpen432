@@ -45,7 +45,8 @@
 
 
 void irq_c_handler(void);
-void enable_arm_irq(void);
+void enable_timer_irq(void);
+void enable_uart_irq(void);
 int stop_blinking(void);
 int start_blinking_with_freq(int freq);
 void handle_keyboard_input(uint8_t received_byte);

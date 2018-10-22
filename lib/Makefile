@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+CFLAGS = -c -Wall -I ../env/include
 
 OBJS	= uspilibrary.o \
 	  dwhcidevice.o dwhciregister.o dwhcixferstagedata.o \
