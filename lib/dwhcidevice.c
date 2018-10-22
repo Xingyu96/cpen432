@@ -28,6 +28,9 @@
 #include <uspi/synchronize.h>
 #include <uspi/assert.h>
 
+#include <printk.h>
+#include <interrupts2.h>
+
 #define ARM_IRQ_USB		9		// for ConnectInterrupt()
 
 #define DEVICE_ID_USB_HCD	3		// for SetPowerStateOn()
@@ -120,6 +123,7 @@ boolean DWHCIDeviceInitialize (TDWHCIDevice *pThis)
 	if (DWHCIRegisterRead (&VendorId) != 0x4F54280A)
 	{
 		LogWrite (FromDWHCI, LOG_ERROR, "Unknown vendor 0x%0X", DWHCIRegisterGet (&VendorId));
+		printk("no vender\n");
 		_DWHCIRegister (&VendorId);
 		return FALSE;
 	}
@@ -127,6 +131,7 @@ boolean DWHCIDeviceInitialize (TDWHCIDevice *pThis)
 	if (!SetPowerStateOn (DEVICE_ID_USB_HCD))
 	{
 		LogWrite (FromDWHCI, LOG_ERROR, "Cannot power on");
+		printk("Cannot power on\n");
 		_DWHCIRegister (&VendorId);
 		return FALSE;
 	}
@@ -138,21 +143,24 @@ boolean DWHCIDeviceInitialize (TDWHCIDevice *pThis)
 	DWHCIRegisterAnd (&AHBConfig, ~DWHCI_CORE_AHB_CFG_GLOBALINT_MASK);
 	DWHCIRegisterWrite (&AHBConfig);
 	
-	ConnectInterrupt (ARM_IRQ_USB, DWHCIDeviceInterruptHandler, pThis);
+	TInterruptHandler* IRQ_C_HANDLER = (TInterruptHandler*) irq_c_handler;
+	ConnectInterrupt (ARM_IRQ_USB, IRQ_C_HANDLER, pThis);
 
 	if (!DWHCIDeviceInitCore (pThis))
 	{
 		LogWrite (FromDWHCI, LOG_ERROR, "Cannot initialize core");
+		printk("Cannot initialize core\n");
 		_DWHCIRegister (&AHBConfig);
 		_DWHCIRegister (&VendorId);
 		return FALSE;
 	}
 	
-	DWHCIDeviceEnableGlobalInterrupts (pThis);
+	DWHCIDeviceEnableGlobalInterrupts (pThis); 
 	
 	if (!DWHCIDeviceInitHost (pThis))
 	{
 		LogWrite (FromDWHCI, LOG_ERROR, "Cannot initialize host");
+		printk("Cannot initialize host\n");
 		_DWHCIRegister (&AHBConfig);
 		_DWHCIRegister (&VendorId);
 		return FALSE;

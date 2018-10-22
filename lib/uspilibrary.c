@@ -25,24 +25,34 @@
 #include <uspi/util.h>
 #include <uspi/assert.h>
 
+#include <printk.h>
+
 static const char FromUSPi[] = "uspi";
 
 static TUSPiLibrary *s_pLibrary = 0;
 
 int USPiInitialize (void)
 {
+	printk("in uspi init\n");
 	assert (s_pLibrary == 0);
+	printk("library is 0\n");
 	s_pLibrary = (TUSPiLibrary *) malloc (sizeof (TUSPiLibrary));
+	printk("malloced library\n");
 	assert (s_pLibrary != 0);
 
+	printk("tuspilibrary is not 0\n");
+
 	DeviceNameService (&s_pLibrary->NameService);
+	printk("DeviceNameService passed\n");
 	DWHCIDevice (&s_pLibrary->DWHCI);
+	printk("DWHCIDevice passed\n");
 	s_pLibrary->pEth0 = 0;
 	s_pLibrary->pEth10 = 0;
 
 	if (!DWHCIDeviceInitialize (&s_pLibrary->DWHCI))
 	{
 		LogWrite (FromUSPi, LOG_ERROR, "Cannot initialize USB host controller interface");
+		printk("Cannot initialize USB host controller interface	\n");
 
 		_DWHCIDevice (&s_pLibrary->DWHCI);
 		_DeviceNameService (&s_pLibrary->NameService);

@@ -42,11 +42,17 @@
 
 #define TIMER_IRQ_FREQ		1000000
 
+#define USB_VBUS_REG			(volatile uint32_t *)(0x7E980088)
+#define VBUS_IRQ_ENABLE			(1 << 9)
+#define VBUS_IRQ_STATUS_BIT		8
+#define VUBS_IRQ_PENDING        ( (*USB_VBUS_REG >> VBUS_IRQ_STATUS_BIT) & 1 )
 
 
 void irq_c_handler(void);
 void enable_timer_irq(void);
+void disable_timer_irq(void);
 void enable_uart_irq(void);
+void enable_usb_irq(void);
 int stop_blinking(void);
 int start_blinking_with_freq(int freq);
 void handle_keyboard_input(uint8_t received_byte);

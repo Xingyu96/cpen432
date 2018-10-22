@@ -37,8 +37,15 @@ void irq_c_handler(void) {
     	uint8_t receiver_fifo_data = (uint8_t) uart_get_byte();	
     	handle_keyboard_input(receiver_fifo_data);
     }
-    
-    
+
+	// Handle ethernet
+	else if( VUBS_IRQ_PENDING ){
+		printk("ethernet interrupt pending\n");
+	}
+
+	else{
+		//printk("unhandled interrupt\n");
+	}   
 }
 
 /**
@@ -51,12 +58,30 @@ void enable_timer_irq(void) {
 }
 
 /**
+ * @brief Disable timer interrupt sources
+ * 
+ */
+void disable_timer_irq(void) {
+    // Disable timer IRQ
+   *RPI_INTERRUPT_CONTROLLER_DISABLE_BASIC_IRQS_REG = RPI_BASIC_ARM_TIMER_IRQ;
+}
+
+/**
  * @brief Enable uart interrupt sources
  * 
  */
 void enable_uart_irq(void) {
     // Enable Auxiliary IRQ for Mini-UART
     *RPI_INTERRUPT_CONTROLLER_ENABLE_IRQS_1_REG  = RPI_AUX_INT_IRQ;   
+}
+
+/**
+ * @brief Enable usb interrupt sources
+ * 
+ */
+void enable_usb_irq(void) {
+    // Enable Auxiliary IRQ for Mini-UART
+    *USB_VBUS_REG |= VBUS_IRQ_ENABLE;   
 }
 
 /**
